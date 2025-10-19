@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>🎆 Cinematic Fireworks with Built-in SFX 🎆</title>
+<title>🎆 Sharp Glowing Fireworks 🎆</title>
 <style>
   html, body { margin:0; padding:0; overflow:hidden; height:100%; background:#010101; touch-action: manipulation; }
   h1 {
@@ -27,33 +27,16 @@ window.addEventListener('resize', resize);
 function resize(){ w=canvas.width=innerWidth; h=canvas.height=innerHeight; }
 
 let fireworks=[], particles=[], flashes=[];
+
+// Firework color palette
 const palette = ['#ffd700','#ff4500','#ff1493','#00ffff','#8a2be2'];
 
-// --- Web Audio API SFX ---
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playSFX(type){
-  const osc = audioCtx.createOscillator();
-  const gainNode = audioCtx.createGain();
-  osc.connect(gainNode); gainNode.connect(audioCtx.destination);
-  osc.type = 'square';
-  let duration = 0.1, freq = 0;
-  if(type==='launch'){ freq=400; duration=0.15; }
-  else if(type==='boom'){ freq=150; duration=0.25; }
-  else if(type==='crackle'){ freq=800 + Math.random()*400; duration=0.05; }
-  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-  gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-  osc.start();
-  osc.stop(audioCtx.currentTime + duration);
-}
-
-// --- Firework Classes ---
 class Firework {
   constructor(sx, sy, tx, ty){
     this.x=sx; this.y=sy; this.tx=tx; this.ty=ty;
     this.coordinates=[]; this.coordCount=5; while(this.coordCount--) this.coordinates.push([sx,sy]);
     this.angle=Math.atan2(ty-sy,tx-sx); this.speed=6; this.acceleration=1.03;
     this.color = palette[Math.floor(Math.random()*palette.length)];
-    playSFX('launch');
   }
   update(i){
     this.coordinates.pop(); this.coordinates.unshift([this.x,this.y]);
@@ -72,8 +55,8 @@ class Firework {
     ctx.stroke();
   }
   explode(){
+    // flash glow at explosion
     flashes.push({x:this.tx,y:this.ty,alpha:1,size:0,color:this.color});
-    playSFX('boom');
     const layers=[{count:25,speed:4},{count:35,speed:3},{count:20,speed:2}];
     layers.forEach(layer=>{
       for(let i=0;i<layer.count;i++){
@@ -98,11 +81,11 @@ class Particle {
     this.x+=Math.cos(this.angle)*this.speed;
     this.y+=Math.sin(this.angle)*this.speed+this.gravity;
     this.alpha-=this.decay;
-    if(Math.random()<0.02){ playSFX('crackle'); }
     if(this.alpha<=0) particles.splice(i,1);
   }
   draw(){
     ctx.globalCompositeOperation='lighter';
+    // glow
     ctx.shadowBlur = 8;
     ctx.shadowColor = this.color;
     ctx.strokeStyle = this.color;
@@ -117,7 +100,6 @@ class Particle {
   }
 }
 
-// --- Animation Loop ---
 function animate(){
   ctx.fillStyle='rgba(0,0,0,0.2)'; ctx.fillRect(0,0,w,h);
   flashes.forEach((f,i)=>{
@@ -131,7 +113,6 @@ function animate(){
   requestAnimationFrame(animate);
 }
 
-// --- User Interaction ---
 canvas.addEventListener('click', e=>fireworks.push(new Firework(w/2,h,e.clientX,e.clientY)));
 canvas.addEventListener('touchstart', e=>{ const t=e.touches[0]; fireworks.push(new Firework(w/2,h,t.clientX,t.clientY)); });
 
